@@ -21,7 +21,14 @@ export class User {
     @Column()
     fullname: string;
 
-    @Column()
+    // @Column()
+    // friendly: number;
+    // 🖼️ Avatar (có thể để trống)
+    @Column({ type: 'varchar', nullable: true })
+    avatar?: string; // lưu đường dẫn file, ví dụ: "mediaasset/avatars/abc.jpg"
+
+    // 🤝 Friendly (mặc định = 0)
+    @Column({ type: 'int', default: 0 })
     friendly: number;
 
     @Column()

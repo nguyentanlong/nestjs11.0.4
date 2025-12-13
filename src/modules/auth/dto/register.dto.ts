@@ -30,5 +30,12 @@ export class RegisterDto {
         return Number(value);
     })
     friendly: number;
+    @IsOptional()
+    @IsString()
+    avatar?: string;
+
+    //   @IsOptional()
+    //   @IsNumber()
+    //   friendly?: number;
 
 }

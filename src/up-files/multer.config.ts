@@ -12,8 +12,9 @@
 //     }),
 // };
 // src/uploads/multer.config.ts
+import { existsSync, mkdirSync } from 'fs';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
 
 // Hàm bỏ dấu tiếng Việt và chuẩn hóa tên file
 function normalizeFileName(originalName: string): string {
@@ -70,6 +71,55 @@ export const multerConfig = {
 //       const baseName = normalizeFileName(file.originalname);
 //       const uniqueSuffix = Date.now();
 //       const finalName = `${baseName}-nguyen-tan-long-${uniqueSuffix}${ext}`;
+//       callback(null, finalName);
+//     },
+//   }),
+// };
+// Config riêng cho avatar, cho chung 1 folder 
+//Khi upload avatar, controller sẽ dùng FileInterceptor('avatar', multerAvatarConfig) thay vì multerConfig.
+export const multerAvatarConfig = {
+    storage: diskStorage({
+        destination: (req, file, callback) => {
+            const uploadPath = join(process.cwd(), 'mediaasset', 'avatars');
+            if (!existsSync(uploadPath)) {
+                mkdirSync(uploadPath, { recursive: true });
+            }
+            callback(null, uploadPath);
+        },
+        filename: (req, file, callback) => {
+            const ext = extname(file.originalname);
+            const baseName = normalizeFileName(file.originalname);
+            const uniqueSuffix = Date.now();
+            const finalName = `${baseName}-avatar-${uniqueSuffix}${ext}`;
+            callback(null, finalName);
+        },
+    }),
+};
+/*
+📌 Cách 2: Dùng chung config nhưng phân loại theo fieldname
+Nếu muốn gọn hơn, có thể dùng một config duy nhất, nhưng trong destination kiểm tra file.fieldname:
+
+Nếu field là "avatar" → lưu vào mediaasset/avatars
+
+Nếu field là "product" → lưu vào mediaasset/products
+*/
+// export const multerConfig = {
+//   storage: diskStorage({
+//     destination: (req, file, callback) => {
+//       let folder = 'mediaasset/products';
+//       if (file.fieldname === 'avatar') {
+//         folder = 'mediaasset/avatars';
+//       }
+//       if (!existsSync(folder)) {
+//         mkdirSync(folder, { recursive: true });
+//       }
+//       callback(null, folder);
+//     },
+//     filename: (req, file, callback) => {
+//       const ext = extname(file.originalname);
+//       const baseName = normalizeFileName(file.originalname);
+//       const uniqueSuffix = Date.now();
+//       const finalName = `${baseName}-${file.fieldname}-${uniqueSuffix}${ext}`;
 //       callback(null, finalName);
 //     },
 //   }),

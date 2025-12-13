@@ -18,11 +18,26 @@ export class AuthService {
         private blacklistService: BlacklistService, // để đăng xuất
     ) { }
 
-    async register(dto: RegisterDto) {
+    // async register(dto: RegisterDto) {
+    //     const exist = await this.userRepo.findOneBy({ email: dto.email });
+    //     if (exist) throw new BadRequestException('Email đã tồn tại nha ku');
+
+    //     const user = this.userRepo.create(dto);
+    //     await this.userRepo.save(user);
+
+    //     return this.generateTokens(user);
+    // }
+    async register(dto: RegisterDto, file?: Express.Multer.File) {
         const exist = await this.userRepo.findOneBy({ email: dto.email });
         if (exist) throw new BadRequestException('Email đã tồn tại nha ku');
 
         const user = this.userRepo.create(dto);
+
+        // Nếu có file avatar thì gán đường dẫn
+        if (file?.filename) {
+            user.avatar = `mediaasset/avatars/${file.filename}`;
+        }
+
         await this.userRepo.save(user);
 
         return this.generateTokens(user);
