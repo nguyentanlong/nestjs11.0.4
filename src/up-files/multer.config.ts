@@ -37,12 +37,40 @@ function normalizeFileName(originalName: string): string {
 
 export const multerConfig = {
     storage: diskStorage({
-        destination: './uploads', // thư mục lưu file
+        destination: './mediaasset', // thư mục lưu file
         filename: (req, file, callback) => {
             const ext = extname(file.originalname); // lấy phần mở rộng
             const baseName = normalizeFileName(file.originalname); // chuẩn hóa tên
-            const finalName = `${baseName}-nguyen-tan-long${ext}`; // thêm hậu tố
+            const uniqueSuffix = Date.now(); // hoặc uuid
+            const finalName = `${baseName}-nguyen-tan-long-${uniqueSuffix}${ext}`; // thêm hậu tố
             callback(null, finalName);
         },
     }),
 };
+//Tạo folder theo ngày
+// export const multerConfig = {
+//   storage: diskStorage({
+//     destination: (req, file, callback) => {
+//       // Lấy ngày hiện tại (dd-mm)
+//       const now = new Date();
+//       const folderName = `${now.getDate()}-${now.getMonth() + 1}`;
+
+//       // Thư mục đầy đủ
+//       const uploadPath = `./mediaasset/${folderName}`;
+
+//       // Nếu chưa có thư mục thì tạo mới
+//       if (!existsSync(uploadPath)) {
+//         mkdirSync(uploadPath, { recursive: true });
+//       }
+
+//       callback(null, uploadPath);
+//     },
+//     filename: (req, file, callback) => {
+//       const ext = extname(file.originalname);
+//       const baseName = normalizeFileName(file.originalname);
+//       const uniqueSuffix = Date.now();
+//       const finalName = `${baseName}-nguyen-tan-long-${uniqueSuffix}${ext}`;
+//       callback(null, finalName);
+//     },
+//   }),
+// };

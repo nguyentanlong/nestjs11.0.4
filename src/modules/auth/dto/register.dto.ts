@@ -21,5 +21,14 @@ export class RegisterDto {
         },
     ) password: string;
     @IsNotEmpty({ message: 'Không được để trống tên đầy đủ nha ku' }) fullname: string;
-    @IsOptional() friendly?: number;
+    // @IsOptional() friendly?: number;
+    @IsOptional()
+    @Transform(({ value }) => {
+        if (value === undefined || value === null || value === '') {
+            return 0;
+        }
+        return Number(value);
+    })
+    friendly: number;
+
 }

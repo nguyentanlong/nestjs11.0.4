@@ -72,7 +72,7 @@ import { RolesGuard } from 'src/common/guards/roles.guard';// Guard kiểm tra r
 
 // 👉 import Multer interceptor và config
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { multerConfig } from 'src/uploads/multer.config';
+import { multerConfig } from 'src/up-files/multer.config';
 import { UpdateProductDtoMoi } from './dto/update-product.dto';
 
 
@@ -122,21 +122,66 @@ export class ProductsController {
     // async update(@Req() req, @Param('id') id: string, @Body() dto: UpdateProductDto) {
     //     return this.productsService.updateProduct(req.user, id, dto);
     // }
+    //code này dùng co json postman
+    // @Put(':id')
+    // async update(
+    //     @Req() req,
+    //     @Param('id') id: string,
+    //     @Body() dto: UpdateProductDtoMoi,
+    // ) {
+    //     return this.productsService.updateProduct(req.user, id, dto);
+    // }
+    //cái này dùng cho form-data
     @Put(':id')
+    @UseInterceptors(FilesInterceptor('files', 10, multerConfig)) // ✅ truyền multerConfig vào đây // 'files' là key trong form-data
     async update(
         @Req() req,
         @Param('id') id: string,
         @Body() dto: UpdateProductDtoMoi,
+        @UploadedFiles() files: Express.Multer.File[],
     ) {
-        return this.productsService.updateProduct(req.user, id, dto);
+        return this.productsService.updateProduct(req.user, id, dto, files);
     }
-
 
     // 🔴 API xóa sản phẩm
     @Delete(':id')
     async delete(@Req() req, @Param('id') id: string) {
         return this.productsService.deleteProduct(req.user, id);
     }
+
+    //api xóa sản phẩm dưới DB
+    // 🟢 Hard delete product
+    @UseGuards(JwtAuthGuard) // bảo vệ bằng JWT
+    @Delete(':id/hard')
+    async hardDelete(@Req() req, @Param('id') id: string) {
+        return this.productsService.hardDeleteProduct(req.user, id);
+    }
+    // 🟢 Xóa một file media của sản phẩm
+    @UseGuards(JwtAuthGuard)
+    @Delete(':id/media/:filename')
+    async deleteMedia(@Req() req, @Param('id') id: string, @Param('filename') filename: string) {
+        return this.productsService.deleteProductMedia(req.user, id, filename);
+    }
+    // 🟢 Xóa nhiều file media hoặc toàn bộ media của sản phẩm
+    @UseGuards(JwtAuthGuard)
+    @Delete(':id/media')
+    async deleteMedias(
+        @Req() req,
+        @Param('id') id: string,
+        @Body('filenames') filenames?: string[], // truyền mảng tên file cần xóa
+    ) {
+        return this.productsService.deleteProductMedias(req.user, id, filenames);
+    }
+    // 🟢 Xóa nhiều file media từ nhiều sản phẩm
+    @UseGuards(JwtAuthGuard)
+    @Delete('media/multiple')
+    async deleteMultipleMedias(
+        @Req() req,
+        @Body() body: { files: { productId: string; filename: string }[] },
+    ) {
+        return this.productsService.deleteMultipleMedias(req.user, body.files);
+    }
+
 
     // 📖 API lấy tất cả sản phẩm
     @Get()
