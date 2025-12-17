@@ -13,14 +13,14 @@ import {
     UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-// import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // guard JWT của đệ
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerAvatarConfig } from 'src/up-files/multer.config';
-import { RegisterDto } from '../auth/dto/register.dto';
+// import { RegisterDto } from '../auth/dto/register.dto';
 // import { AuthService } from '../auth/auth.service';
 
 @Controller('users')
@@ -34,10 +34,10 @@ export class UsersController {
     // async create(@Body() dto: CreateUserDto) {
     //     return this.usersService.create(dto);
     // }
-    @Post('registerFromAdmin')
+    @Post('admin-create')
     @Roles('admin')
     @UseInterceptors(FileInterceptor('avatar', multerAvatarConfig))
-    async register(@Body() dto: RegisterDto, @UploadedFile() file?: Express.Multer.File) {
+    async register(@Body() dto: CreateUserDto, @UploadedFile() file?: Express.Multer.File) {
         return this.usersService.registerFromUsers(dto, file);
     }
 
@@ -60,16 +60,16 @@ export class UsersController {
     //     return this.usersService.findOne(id);
     // }
 
-    @Put(':id')
-    @UseInterceptors(FileInterceptor('avatar', multerAvatarConfig))//trên client phải giống avatar
-    @Roles('admin', 'staff', 'user')
-    async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-        return this.usersService.update(id, dto);
-    }
-
-    @Delete(':id')
-    @Roles('admin', 'staff', 'user')
-    async remove(@Param('id') id: string) {
-        return this.usersService.remove(id);
-    }
+    /* @Put(':id')
+     @UseInterceptors(FileInterceptor('avatar', multerAvatarConfig))//trên client phải giống avatar
+     @Roles('admin', 'staff', 'user')
+     async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+         return this.usersService.update(id, dto);
+     }
+ 
+     @Delete(':id')
+     @Roles('admin', 'staff', 'user')
+     async remove(@Param('id') id: string) {
+         return this.usersService.remove(id);
+     }*/
 }

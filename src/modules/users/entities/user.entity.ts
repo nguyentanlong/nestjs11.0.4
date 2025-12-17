@@ -1,5 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { IsEnum } from 'class-validator';
+import { Role } from 'src/common/enums/enum.role';
 
 @Entity()
 export class User {
@@ -34,8 +36,15 @@ export class User {
     @Column()
     phone: string;
 
-    @Column(/*{ default: 'user' }*/) // 'user' | 'admin'
-    role: string;
+    //better-sql3 ko hỗ trợ kiểu này
+    // @Column({ type: 'enum', enum: Role, default: Role.USER })
+    // role: Role;
+    @Column({
+        type: 'simple-enum',  // quan trọng: dùng simple-enum thay vì enum
+        enum: Role,           // giữ enum TS để type-safe
+        default: Role.USER,   // default an toàn
+    })
+    role: Role;
 
     @BeforeInsert()
     async hashPassword() {

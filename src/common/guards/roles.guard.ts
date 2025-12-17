@@ -43,11 +43,14 @@ export class RolesGuard implements CanActivate {
         if (user.role === 'admin') return true;
 
         // Nếu là staff/user => chỉ cho phép thao tác trên chính họ
+        // const paramsId = request.params?.id;
+        // if (paramsId && String(user.id) !== String(paramsId)) {
+        //     throw new ForbiddenException('Chỉ được thao tác trên tài khoản của chính mình');
+        // }
         const paramsId = request.params?.id;
-        if (paramsId && String(user.id) !== String(paramsId)) {
+        if (paramsId && paramsId !== request.user.id) {  // so sánh string === string
             throw new ForbiddenException('Chỉ được thao tác trên tài khoản của chính mình');
         }
-
         return true;
     }
 }
