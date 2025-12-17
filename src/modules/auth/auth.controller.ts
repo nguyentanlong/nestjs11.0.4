@@ -12,10 +12,7 @@ import { multerAvatarConfig } from 'src/up-files/multer.config';
 export class AuthController {
     constructor(private authService: AuthService) { }
 
-    // @Post('register')
-    // async register(@Body() dto: RegisterDto) {
-    //     return this.authService.register(dto);
-    // }
+
     @Post('register')
     @UseInterceptors(FileInterceptor('avatar', multerAvatarConfig))
     async register(@Body() dto: RegisterDto, @UploadedFile() file?: Express.Multer.File) {
