@@ -1,27 +1,46 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
+// import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { AuthService } from '../auth/auth.service';
+import { RegisterDto } from '../auth/dto/register.dto';
 
 @Injectable()
 export class UsersService {
     constructor(
-        @InjectRepository(User)
-        private readonly userRepo: Repository<User>,
+        // @InjectRepository(User)
+        // private readonly userRepo: Repository<User>,
+        @InjectRepository(User) private readonly userRepo: Repository<User>,
+        private readonly authService: AuthService,
         // userRepo: truy cập bảng User trong DB qua TypeORM
     ) { }
 
-    async create(dto: CreateUserDto) {
-        const exist = await this.userRepo.findOne({ where: { email: dto.email } });
-        if (exist) throw new NotFoundException('Email đã tồn tại');
+    // async create(dto: CreateUserDto) {
+    //     const exist = await this.userRepo.findOne({ where: { email: dto.email } });
+    //     if (exist) throw new NotFoundException('Email đã tồn tại');
 
-        const hashed = await bcrypt.hash(dto.password, 10); // mã hóa mật khẩu
-        const user = this.userRepo.create({ ...dto, password: hashed }); // tạo entity từ DTO
-        await this.userRepo.save(user); // lưu xuống DB
-        return user;
+    //     const hashed = await bcrypt.hash(dto.password, 10); // mã hóa mật khẩu
+    //     const user = this.userRepo.create({ ...dto, password: hashed }); // tạo entity từ DTO
+    //     await this.userRepo.save(user); // lưu xuống DB
+    //     return user;
+    // }
+    async registerFromUsers(dto: RegisterDto, file?: Express.Multer.File) {//CreateUserDto
+        const exist = await this.userRepo.findOneBy({ email: dto.email });
+        if (exist) throw new BadRequestException('Email đã tồn tại nha ku');
+
+        const user = this.userRepo.create(dto);
+
+        // Nếu có file avatar thì gán đường dẫn
+        if (file?.filename) {
+            user.avatar = `mediaasset/avatars/${file.filename}`;
+        }
+
+        await this.userRepo.save(user);
+
+        return this.authService.generateTokens(user);
     }
 
     async findAll() {

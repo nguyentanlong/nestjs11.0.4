@@ -8,17 +8,20 @@ import {
     Patch,
     Post,
     Put,
+    UploadedFile,
     UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
+// import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // guard JWT của đệ
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerAvatarConfig } from 'src/up-files/multer.config';
+import { RegisterDto } from '../auth/dto/register.dto';
+// import { AuthService } from '../auth/auth.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -26,10 +29,16 @@ import { multerAvatarConfig } from 'src/up-files/multer.config';
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
-    @Post()
-    @Roles('admin') // chỉ admin tạo user
-    async create(@Body() dto: CreateUserDto) {
-        return this.usersService.create(dto);
+    // @Post()
+    // @Roles('admin') // chỉ admin tạo user
+    // async create(@Body() dto: CreateUserDto) {
+    //     return this.usersService.create(dto);
+    // }
+    @Post('registerFromAdmin')
+    @Roles('admin')
+    @UseInterceptors(FileInterceptor('avatar', multerAvatarConfig))
+    async register(@Body() dto: RegisterDto, @UploadedFile() file?: Express.Multer.File) {
+        return this.usersService.registerFromUsers(dto, file);
     }
 
     @Get()

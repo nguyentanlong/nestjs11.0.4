@@ -52,7 +52,7 @@ export class AuthService {
         return this.generateTokens(user);
     }
 
-    private generateTokens(user: User) {
+    public generateTokens(user: User) {
         return {
             accessToken: this.jwtService.sign({ sub: user.id, role: user.role }),
             refreshToken: this.jwtService.sign(
