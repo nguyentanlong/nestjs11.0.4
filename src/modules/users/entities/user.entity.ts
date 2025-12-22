@@ -1,6 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, DeleteDateColumn } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
 import { Role } from 'src/common/enums/enum.role';
 
 @Entity()
@@ -21,7 +21,7 @@ export class User {
     address: string;
 
     @Column()
-    fullname: string;
+    fullName: string;
 
     // @Column()
     // friendly: number;
@@ -39,6 +39,7 @@ export class User {
     //better-sql3 ko hỗ trợ kiểu này
     // @Column({ type: 'enum', enum: Role, default: Role.USER })
     // role: Role;
+    //để set quyền
     @Column({
         type: 'simple-enum',  // quan trọng: dùng simple-enum thay vì enum
         enum: Role,           // giữ enum TS để type-safe
@@ -46,8 +47,13 @@ export class User {
     })
     role: Role;
 
-    @BeforeInsert()
-    async hashPassword() {
-        this.password = await bcrypt.hash(this.password, 10);
-    }
+    // @BeforeInsert()
+    // async hashPassword() {
+    //     this.password = await bcrypt.hash(this.password, 10);
+    // }
+    @DeleteDateColumn({
+        type: 'datetime',   // hoặc 'text' nếu muốn, nhưng datetime tốt hơn
+        nullable: true
+    })
+    deletedAt?: Date;
 }

@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { ConfigService } from "@nestjs/config"; // thêm ConfigService
+import { Role } from "src/common/enums/enum.role";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -19,6 +20,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Hàm validate: giữ nguyên logic của đệ
     async validate(payload: any) {
         // Trả về object user để gắn vào req.user
-        return { id: payload.sub, role: payload.role };
+        return { id: payload.sub, role: payload.role as Role };  // cast để TS biết req.user.role là Role
     }
 }

@@ -20,7 +20,7 @@ export class RegisterDto {
                 'Mật khẩu phải có ít nhất 1 chữ thường, 1 chữ in hoa, 1 số và 1 ký tự đặc biệt',
         },
     ) password: string;
-    @IsNotEmpty({ message: 'Không được để trống tên đầy đủ nha ku' }) fullname: string;
+    @IsNotEmpty({ message: 'Không được để trống tên đầy đủ nha ku' }) fullName: string;
     // @IsOptional() friendly?: number;
     @IsOptional()
     @Transform(({ value }) => {

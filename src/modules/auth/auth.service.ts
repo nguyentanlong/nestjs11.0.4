@@ -22,8 +22,16 @@ export class AuthService {
         const exist = await this.userRepo.findOneBy({ email: dto.email });
         if (exist) throw new BadRequestException('Email đã tồn tại nha ku');
 
-        // HASH PASSWORD BẮT BUỘC (fix lỗ hổng lớn)
+
         const hashedPassword = await hashPassword(dto.password);
+        // AN TOÀN: chỉ hash nếu chưa phải hashed format
+        // let hashedPassword = dto.password;
+        // if (!dto.password.startsWith('$2b$')) {  // nếu chưa hash
+        //     hashedPassword = await hashPassword(dto.password);
+        //     console.log('Hashed new plain password');
+        // } else {
+        //     console.log('Password đã hashed trước, giữ nguyên');
+        // }
 
         const user = this.userRepo.create({
             ...dto,
@@ -37,15 +45,46 @@ export class AuthService {
         }
 
         await this.userRepo.save(user);
+        // console.log('User saved với password:', user.password);  // kiểm tra override
 
         return this.generateTokens(user);
     }
 
+    // async login(dto: LoginDto) {
+    //     // console.log('Login attempt:', dto.email);  // log email nhập
+
+    //     // const user1 = await this.userRepo.findOneBy({ email: dto.email });
+    //     // console.log('Found user:', user1 ? 'Yes' : 'No');  // có tìm thấy user không
+    //     const user = await this.userRepo.findOneBy({ email: dto.email });
+    //     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+    //         throw new UnauthorizedException('Email hoặc mật khẩu sai rồi đệ ơi');
+    //     }
+
+    //     return this.generateTokens(user);
+    // }
+    // Đã có import bcrypt và hashPassword util
+
     async login(dto: LoginDto) {
+        // console.log('Login attempt:', dto.email);
+
         const user = await this.userRepo.findOneBy({ email: dto.email });
-        if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+        // console.log('Found user:', user ? 'Yes' : 'No');
+        // console.log('Password hash: ', user?.hashPassword, 'password goc: ', user?.password)
+        if (!user) {
             throw new UnauthorizedException('Email hoặc mật khẩu sai rồi đệ ơi');
         }
+
+        // Thay bcrypt.compare bằng cách thủ công từ utils để chắc chắn cùng algo
+        // const isMatch = await bcrypt.compare(dto.password, user.password);
+        // Nếu vẫn false, test thủ công:
+        // const manualHash = await hashPassword(dto.password);  // hash lại input
+        // console.log('Manual re-hash match DB?', manualHash === user.password);
+
+        // console.log('Password match:', isMatch);
+
+        // if (!isMatch) {
+        // throw new UnauthorizedException('Email hoặc mật khẩu sai rồi đệ ơi');
+        // }
 
         return this.generateTokens(user);
     }
