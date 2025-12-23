@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Comment } from '../../comments/entities/comment.entity';
 @Entity('products')
 export class Product {
     @PrimaryGeneratedColumn('uuid')
@@ -30,6 +31,9 @@ export class Product {
 
     @Column({ nullable: true })
     editReason: string;
+
+    @OneToMany(() => Comment, (comment) => comment.product)
+    comments: Comment[];
 
     @Column({ default: false })
     deleted: boolean;

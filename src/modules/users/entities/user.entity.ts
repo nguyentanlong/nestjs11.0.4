@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, DeleteDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, DeleteDateColumn, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { IsEnum, IsOptional } from 'class-validator';
 import { Role } from 'src/common/enums/enum.role';
+import { Comment } from 'src/modules/comments/entities/comment.entity';
 
 @Entity()
 export class User {
@@ -47,6 +48,8 @@ export class User {
     })
     role: Role;
 
+    @OneToMany(() => Comment, (comment) => comment.user)
+    comments: Comment[];
     // @BeforeInsert()
     // async hashPassword() {
     //     this.password = await bcrypt.hash(this.password, 10);
