@@ -121,6 +121,20 @@ export class RolesGuard implements CanActivate {
             //     throw new ForbiddenException('Chỉ được thao tác trên tài khoản của chính mình');
             // }
         }
+        // === THÊM PHẦN CHECK QUYỀN CHO COMMENT TẠI ĐÂY ===
+        // Route comment: /products/:productId/comments/:id → có "/comments/" trong url và có params.id
+        const isCommentRoute = request.url.includes('/comments/');
+        const hasCommentId = request.params?.id !== undefined;
+
+        if (isCommentRoute && hasCommentId) {
+            // Ở guard chỉ detect route comment cần ownership
+            // Check thực tế comment.userId === user.id để service handle (pro + chính xác)
+            // Guard không query repo → nhẹ
+            // Service sẽ load comment + check userId
+        }
+        // Không throw gì ở guard cho comment – để service check chi tiết
+        // ================================================
+
         return true;
     }
 }

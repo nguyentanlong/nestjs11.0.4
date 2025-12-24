@@ -1,15 +1,12 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { IsOptional, IsString, IsArray } from 'class-validator';
 
 export class UpdateCommentDto {
-    @IsString()
-    content: string;
-
     @IsOptional()
     @IsString()
-    parentId?: string;  // for reply
+    content?: string;
 
     @IsOptional()
     @IsArray()
     @IsString({ each: true })
-    tags?: string[];  // e.g. ['@user1']
+    tags?: string[];
 }

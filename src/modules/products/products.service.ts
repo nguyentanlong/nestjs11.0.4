@@ -92,6 +92,30 @@ export class ProductsService {
 
     //     return this.productRepo.save(product);
     // }
+    async toggleLikeProduct(productId: string, userId: string) {
+        const product = await this.productRepo.findOneBy({ id: productId });
+        if (!product) throw new NotFoundException('Product không tồn tại nha ku');
+
+        if (!product.likedUsers) product.likedUsers = [];
+
+        const hasLiked = product.likedUsers.includes(userId);
+
+        if (hasLiked) {
+            product.likedUsers = product.likedUsers.filter(id => id !== userId);
+            product.likes -= 1;
+        } else {
+            product.likedUsers.push(userId);
+            product.likes += 1;
+        }
+
+        await this.productRepo.save(product);
+
+        return {
+            message: hasLiked ? 'Unlike product thành công' : 'Like product thành công',
+            likes: product.likes,
+            hasLiked: !hasLiked,
+        };
+    }
     async updateProduct(
         user: User,
         id: string,

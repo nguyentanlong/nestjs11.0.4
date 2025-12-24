@@ -35,6 +35,12 @@ export class Product {
     @OneToMany(() => Comment, (comment) => comment.product)
     comments: Comment[];
 
+    @Column({ default: 0 })
+    likes: number;
+    // Thêm ngay sau cột likes hoặc cuối entity
+    @Column('simple-array', { nullable: true, default: () => "'{}'" })
+    likedUsers: string[];  // mảng userId (UUID) đã like product này
+
     @Column({ default: false })
     deleted: boolean;
 }

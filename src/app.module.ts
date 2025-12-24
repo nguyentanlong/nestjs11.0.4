@@ -10,6 +10,8 @@ import { ProductsModule } from './modules/products/products.module';
 // import { CloudinaryProvider } from './config/cloudinary.config';
 import { Product } from './modules/products/entities/product.entity';
 import { ConfigModule } from '@nestjs/config';
+import { Comment } from './modules/comments/entities/comment.entity';
+import { CommentsModule } from './modules/comments/comments.module';
 
 @Module({
   imports: [
@@ -23,14 +25,15 @@ import { ConfigModule } from '@nestjs/config';
       // database: 'muamuaclone',
       type: 'better-sqlite3',        // đổi thành sqlite siêu nhanh
       database: 'Database.db',   // tự động tạo file .db trong thư mục dự án
-      entities: [User, Product],             // vẫn để vậy là được
+      entities: [User, Product, Comment],             // vẫn để vậy là được
       synchronize: true,//tự tạo bảng
     }),
     UsersModule,
     AuthModule,
     //thêm sản phẩm
     ProductsModule,
-    TypeOrmModule.forFeature([Product])
+    TypeOrmModule.forFeature([Product]),
+    CommentsModule
   ],
   // providers: [CloudinaryProvider],
 })

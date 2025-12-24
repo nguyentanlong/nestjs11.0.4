@@ -74,6 +74,7 @@ import { RolesGuard } from 'src/common/guards/roles.guard';// Guard kiểm tra r
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from 'src/up-files/multer.config';
 import { UpdateProductDtoMoi } from './dto/update-product.dto';
+import { JwtPayload } from '../auth/types/jwt-payload.interface';
 
 
 // Controller cho module Products
@@ -141,6 +142,15 @@ export class ProductsController {
         @UploadedFiles() files: Express.Multer.File[],
     ) {
         return this.productsService.updateProduct(req.user, id, dto, files);
+    }
+    //like & unlike
+    @Post(':id/toggle-like')
+    @UseGuards(JwtAuthGuard)
+    async toggleLikeProduct(
+        @Param('id') productId: string,
+        @Req() req: Request & { user: JwtPayload },
+    ) {
+        return this.productsService.toggleLikeProduct(productId, req.user.id);
     }
 
     // 🔴 API xóa sản phẩm

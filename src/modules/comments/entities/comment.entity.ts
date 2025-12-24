@@ -28,8 +28,10 @@ export class Comment {
     @Column('simple-array', { nullable: true })
     tags: string[];  // tag usernames, e.g. ['@user1', '@user2']
 
-    @Column({ default: 0 })
+    @Column({ type: "int", default: 0 })
     likes: number;  // like count (or use Like entity for full like/unlike)
+    @Column('simple-array', { nullable: true, default: () => "'{}'" })  // SQLite ok
+    likedUsers: string[];  // mảng userId (UUID) đã like comment này
     @Column('uuid')
     userId: string;  // index user
 
