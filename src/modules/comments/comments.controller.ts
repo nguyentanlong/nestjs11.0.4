@@ -58,7 +58,7 @@ export class CommentsController {
     // ) {
     //     return this.productsService.toggleLikeProduct(productId, req.user.id);
     // }
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Patch(':id')
     async update(
         @Param('id') id: string,
@@ -69,13 +69,22 @@ export class CommentsController {
     }
     @UseGuards(JwtAuthGuard)
     @Delete(':id')
-    @Roles(Role.ADMIN)  // admin full CRUD
+    // @Roles(Role.ADMIN)  // admin full CRUD
     @UseGuards(RolesGuard)  // thêm để check role + ownership
     async delete(
         @Param('id') id: string,
         @Req() req: Request & { user: JwtPayload },
     ) {
         return this.commentsService.delete(id, req.user.id, req.user.role);
+    }
+    @Delete(':id/hard')
+    @Roles(Role.ADMIN)  // chỉ admin
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    async hardDelete(
+        @Param('id') commentId: string,
+        @Req() req: Request & { user: JwtPayload },
+    ) {
+        return this.commentsService.hardDelete(commentId, req.user.id, req.user.role);
     }
     @Get('top-users')
     @UseGuards(JwtAuthGuard, RolesGuard)

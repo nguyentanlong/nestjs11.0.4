@@ -62,6 +62,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { join } from 'path';// cho upfile
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { AuditDataSource } from './data-source-audit';
 
 async function bootstrap() {
   // const app = await NestFactory.create(AppModule);
@@ -79,7 +80,10 @@ async function bootstrap() {
       transform: true, // tự động transform kiểu dữ liệu (string -> number)
     }),
   );
-
+  // Initialize audit DB riêng
+  if (!AuditDataSource.isInitialized) {
+    await AuditDataSource.initialize();
+  }
   await app.listen(3000);
 }
 bootstrap();

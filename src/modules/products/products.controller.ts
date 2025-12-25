@@ -78,7 +78,7 @@ import { JwtPayload } from '../auth/types/jwt-payload.interface';
 
 
 // Controller cho module Products
-@UseGuards(JwtAuthGuard, RolesGuard) // Bắt buộc đăng nhập và kiểm tra role
+// Bắt buộc đăng nhập và kiểm tra role
 @Controller('products')
 export class ProductsController {
     constructor(private readonly productsService: ProductsService) { }
@@ -109,6 +109,7 @@ export class ProductsController {
     // }
     // API tạo sản phẩm có json và file
     @Post()
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @UseInterceptors(FilesInterceptor('files', 10, multerConfig)) // cho phép upload nhiều file
     async create(
         @Req() req,
@@ -134,6 +135,7 @@ export class ProductsController {
     // }
     //cái này dùng cho form-data
     @Put(':id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @UseInterceptors(FilesInterceptor('files', 10, multerConfig)) // ✅ truyền multerConfig vào đây // 'files' là key trong form-data
     async update(
         @Req() req,
@@ -154,6 +156,7 @@ export class ProductsController {
     }
 
     // 🔴 API xóa sản phẩm
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Delete(':id')
     async delete(@Req() req, @Param('id') id: string) {
         return this.productsService.deleteProduct(req.user, id);
@@ -161,19 +164,22 @@ export class ProductsController {
 
     //api xóa sản phẩm dưới DB
     // 🟢 Hard delete product
-    @UseGuards(JwtAuthGuard) // bảo vệ bằng JWT
+    // @UseGuards(JwtAuthGuard) // bảo vệ bằng JWT
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Delete(':id/hard')
     async hardDelete(@Req() req, @Param('id') id: string) {
         return this.productsService.hardDeleteProduct(req.user, id);
     }
     // 🟢 Xóa một file media của sản phẩm
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Delete(':id/media/:filename')
     async deleteMedia(@Req() req, @Param('id') id: string, @Param('filename') filename: string) {
         return this.productsService.deleteProductMedia(req.user, id, filename);
     }
     // 🟢 Xóa nhiều file media hoặc toàn bộ media của sản phẩm
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Delete(':id/media')
     async deleteMedias(
         @Req() req,
@@ -183,7 +189,8 @@ export class ProductsController {
         return this.productsService.deleteProductMedias(req.user, id, filenames);
     }
     // 🟢 Xóa nhiều file media từ nhiều sản phẩm
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Delete('media/multiple')
     async deleteMultipleMedias(
         @Req() req,

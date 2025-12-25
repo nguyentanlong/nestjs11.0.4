@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, DeleteDateColumn } from 'typeorm';
 import { Product } from '../../products/entities/product.entity';
 import { User } from '../../users/entities/user.entity';
 
@@ -41,6 +41,7 @@ export class Comment {
     @Column('uuid', { nullable: true })
     parentId: string | null;
 
-    @Column({ nullable: true })
+    // @Column({ nullable: true })
+    @DeleteDateColumn()
     deletedAt?: Date;  // soft delete
 }

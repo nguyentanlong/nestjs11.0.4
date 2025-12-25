@@ -82,12 +82,14 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { Role } from '../../common/enums/enum.role';
 import { ProductsService } from '../products/products.service';
+import { AuditLogService } from '../../common/services/audit-log.service'
+
 
 @Injectable()
 export class CommentsService {
     constructor(
         @InjectRepository(Comment) private commentRepo: Repository<Comment>,
-        private productService: ProductsService,
+        private productService: ProductsService, private auditLogService: AuditLogService,
     ) { }
 
     async create(productId: string, dto: CreateCommentDto, userId: string, role: Role, parentId?: string) {
@@ -159,6 +161,13 @@ export class CommentsService {
         comment.content = dto.content ?? comment.content;
         comment.tags = dto.tags ?? comment.tags;
         // comment.likes = dto.likes ??
+        // LOG AUDIT
+        await this.auditLogService.log(
+            userId, role, commentId, // resourceId 
+            'UPDATE_COMMENT', // actionToDb 
+            oldData,
+            newData,
+        );
 
         return this.commentRepo.save(comment);
         //cái này sẽ ghi đè tất cả!
@@ -182,6 +191,19 @@ export class CommentsService {
 
         await this.commentRepo.softDelete(commentId);
         return { message: 'Deleted' };
+    }
+    // HARD DELETE – xóa vĩnh viễn, chỉ admin
+    async hardDelete(commentId: string, userId: string, role: Role) {
+        const comment = await this.commentRepo.findOneBy({ id: commentId });
+        if (!comment) throw new NotFoundException('Comment không tồn tại');
+
+        // Chỉ admin mới xóa cứng
+        if (role !== Role.ADMIN) {
+            throw new ForbiddenException('Chỉ admin mới có quyền hard delete comment');
+        }
+
+        await this.commentRepo.delete(commentId);  // xóa vĩnh viễn khỏi DB
+        return { message: 'Comment đã bị xóa vĩnh viễn' };
     }
     // Top user nhiều comment + like nhất (DESC), và ít nhất (ASC)
     async getTopUsers(order: 'ASC' | 'DESC' = 'DESC', limit = 10) {
