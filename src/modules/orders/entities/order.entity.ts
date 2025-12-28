@@ -15,6 +15,7 @@ export class Order {
     userId: string;  // index for query
 
     @Column('json')  // mảng sản phẩm mua
+    // @ManyToOne(() => Product, product => product.orders)//tạo quan hệ với product
     products: { productId: string; quantity: number; price: number }[];
 
     @Column('decimal')

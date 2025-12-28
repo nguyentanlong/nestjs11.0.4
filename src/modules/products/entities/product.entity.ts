@@ -42,8 +42,13 @@ export class Product {
     @Column('simple-array', { nullable: true, default: () => "'{}'" })
     likedUsers: string[];  // mảng userId (UUID) đã like product này
 
-    @OneToMany(() => Order, (order) => order.products)  // note: order.products là array, không direct relation
-    orders?: Order[];  // optional, vì order.products là json array, không direct relation
+    //tạo quan hệ giữa product và order
+    // @OneToMany(() => Order, (order) => order.products)  // note: order.products là array, không direct relation
+    // orders?: Order;//[];  // optional, vì order.products là json array, không direct relation
+
+    // không tạo quan hệ giữa product và order
+    @Column('json')
+    products: { productId: string; quantity: number; price: number }[];
 
     @Column({ default: false })
     deleted: boolean;
