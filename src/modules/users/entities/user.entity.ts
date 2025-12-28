@@ -1,8 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, DeleteDateColumn, OneToMany } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+// import * as bcrypt from 'bcrypt';
 import { IsEnum, IsOptional } from 'class-validator';
 import { Role } from 'src/common/enums/enum.role';
 import { Comment } from 'src/modules/comments/entities/comment.entity';
+import { Order } from '../../orders/entities/order.entity';
 
 @Entity()
 export class User {
@@ -54,6 +55,9 @@ export class User {
     // async hashPassword() {
     //     this.password = await bcrypt.hash(this.password, 10);
     // }
+
+    @OneToMany(() => Order, (order) => order.user)
+    orders: Order[];  // mảng đơn hàng của user này
     @DeleteDateColumn({
         type: 'datetime',   // hoặc 'text' nếu muốn, nhưng datetime tốt hơn
         nullable: true

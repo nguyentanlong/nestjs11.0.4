@@ -157,17 +157,22 @@ export class CommentsService {
         if (role !== Role.ADMIN && comment.userId !== userId) {
             throw new ForbiddenException('Chỉ được update comment của chính mình thôi nhé ku');
         }
-
+        // Lưu lại dữ liệu cũ 
+        // const oldData = { ...comment };
         comment.content = dto.content ?? comment.content;
         comment.tags = dto.tags ?? comment.tags;
+        //gán dữ liệu mới
+        // const newData = { ...comment };
         // comment.likes = dto.likes ??
         // LOG AUDIT
-        await this.auditLogService.log(
+        /*await this.auditLogService.log(
             userId, role, commentId, // resourceId 
             'UPDATE_COMMENT', // actionToDb 
-            oldData,
-            newData,
-        );
+            // oldData,
+            // newData,
+            { ...comment }, // oldData 
+            { ...comment, ...dto },//newData
+        );*/
 
         return this.commentRepo.save(comment);
         //cái này sẽ ghi đè tất cả!

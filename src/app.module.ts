@@ -12,6 +12,7 @@ import { Product } from './modules/products/entities/product.entity';
 import { ConfigModule } from '@nestjs/config';
 import { Comment } from './modules/comments/entities/comment.entity';
 import { CommentsModule } from './modules/comments/comments.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { CommentsModule } from './modules/comments/comments.module';
     //thêm sản phẩm
     ProductsModule,
     TypeOrmModule.forFeature([Product]),
-    CommentsModule
+    CommentsModule,
+    OrdersModule
   ],
   // providers: [CloudinaryProvider],
 })

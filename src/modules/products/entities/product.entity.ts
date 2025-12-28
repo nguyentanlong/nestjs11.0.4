@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { Comment } from '../../comments/entities/comment.entity';
+import { Order } from '../../orders/entities/order.entity';
 @Entity('products')
 export class Product {
     @PrimaryGeneratedColumn('uuid')
@@ -40,6 +41,9 @@ export class Product {
     // Thêm ngay sau cột likes hoặc cuối entity
     @Column('simple-array', { nullable: true, default: () => "'{}'" })
     likedUsers: string[];  // mảng userId (UUID) đã like product này
+
+    @OneToMany(() => Order, (order) => order.products)  // note: order.products là array, không direct relation
+    orders?: Order[];  // optional, vì order.products là json array, không direct relation
 
     @Column({ default: false })
     deleted: boolean;
