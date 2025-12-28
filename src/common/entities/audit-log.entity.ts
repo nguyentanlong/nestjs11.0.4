@@ -23,10 +23,10 @@ export class AuditLog {
 
     // @Column({ type: 'json', nullable: true })
     // newData?: any;  // snapshot sau thay đổi
-    @Column({ type: 'jsonb', nullable: true })  // jsonb Postgres tốt hơn, SQLite dùng 'json'
+    @Column({ type: 'json', nullable: true })  // jsonb Postgres tốt hơn, SQLite dùng 'json'
     oldData?: Record<string, any>;  // type-safe hơn any
 
-    @Column({ type: 'jsonb', nullable: true })
+    @Column({ type: 'json', nullable: true })
     newData?: Record<string, any>;
 
     @CreateDateColumn()

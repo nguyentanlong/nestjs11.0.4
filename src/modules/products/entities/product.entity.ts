@@ -47,8 +47,8 @@ export class Product {
     // orders?: Order;//[];  // optional, vì order.products là json array, không direct relation
 
     // không tạo quan hệ giữa product và order
-    @Column('json')
-    products: { productId: string; quantity: number; price: number }[];
+    // @Column('json')
+    // products: { productId: string; quantity: number; price: number }[];
 
     @Column({ default: false })
     deleted: boolean;

@@ -1,6 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { Product } from '../../products/entities/product.entity';
+// import { Product } from '../../products/entities/product.entity';
 // import { Role } from '../../common/enums/emum.role';
 
 @Entity()
@@ -8,11 +8,15 @@ export class Order {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @ManyToOne(() => User, (user) => user.orders)
-    user: User;  // owner order
+    // @ManyToOne(() => User, (user) => user.orders)
+    // user: User;  // owner order
 
     @Column('uuid')
     userId: string;  // index for query
+    @ManyToOne(() => User, (user) => user.orders)
+    @JoinColumn({ name: 'userId' }) // ánh xạ userId với quan hệ user: User;
+    user: User;
+    // @ManyToOne(() => User, (user) => user.orders) userId: User;
 
     @Column('json')  // mảng sản phẩm mua
     // @ManyToOne(() => Product, product => product.orders)//tạo quan hệ với product
@@ -21,9 +25,15 @@ export class Order {
     @Column('decimal')
     totalAmount: number;  // tổng tiền
 
-    @Column('enum', { enum: ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'returned'] })
-    status: string;  // trạng thái order
-
+    //sql-better3 ko hỗ trợ
+    // @Column('enum', { enum: ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'returned'] })
+    // status: string;  // trạng thái order
+    @Column({
+        type: 'simple-enum',
+        enum: ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'returned'],
+        default: 'pending',
+    })
+    status: string;
     @Column({ nullable: true })
     cancelReason: string;  // lý do bùng (cancel)
 

@@ -13,6 +13,7 @@ import { ConfigModule } from '@nestjs/config';
 import { Comment } from './modules/comments/entities/comment.entity';
 import { CommentsModule } from './modules/comments/comments.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { Order } from './modules/orders/entities/order.entity';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { OrdersModule } from './modules/orders/orders.module';
       // database: 'muamuaclone',
       type: 'better-sqlite3',        // đổi thành sqlite siêu nhanh
       database: 'Database.db',   // tự động tạo file .db trong thư mục dự án
-      entities: [User, Product, Comment],             // vẫn để vậy là được
+      entities: [User, Product, Comment, Order],             // vẫn để vậy là được
       synchronize: true,//tự tạo bảng
     }),
     UsersModule,

@@ -7,6 +7,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/enum.role';
 import { Request } from 'express';
 import { JwtPayload } from '../auth/types/jwt-payload.interface';
+import { PartialActionDto } from './dto/partial-action.dto';
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
@@ -38,7 +39,25 @@ export class OrdersController {
     ) {
         return this.ordersService.return(orderId, req.user.id, req.user.role, reason);
     }
+    @Patch(':id/partial-cancel')
+    @UseGuards(JwtAuthGuard)
+    async partialCancel(
+        @Param('id') orderId: string,
+        @Body() dto: PartialActionDto,
+        @Req() req: Request & { user: JwtPayload },
+    ) {
+        return this.ordersService.partialAction(orderId, 'cancel', dto, req.user.id, req.user.role);
+    }
 
+    @Patch(':id/partial-return')
+    @UseGuards(JwtAuthGuard)
+    async partialReturn(
+        @Param('id') orderId: string,
+        @Body() dto: PartialActionDto,
+        @Req() req: Request & { user: JwtPayload },
+    ) {
+        return this.ordersService.partialAction(orderId, 'return', dto, req.user.id, req.user.role);
+    }
     @Get('top-products')
     async topProducts(@Query('limit') limit = 10) {
         return this.ordersService.topProducts(limit);
