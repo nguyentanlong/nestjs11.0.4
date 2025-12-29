@@ -8,6 +8,9 @@ class OrderItemDto {
     @IsNumber()
     @Min(1)
     quantity: number;
+
+    @IsNumber()  // thêm price bắt buộc từ frontend hoặc backend fill
+    price: number;  // giá lúc mua (snapshot)
 }
 
 export class CreateOrderDto {

@@ -8,6 +8,8 @@ class PartialItemDto {
     @IsNumber()
     @Min(1)
     quantity: number;  // số lượng muốn cancel/return
+
+
 }
 
 export class PartialActionDto {
@@ -15,6 +17,7 @@ export class PartialActionDto {
     @ValidateNested({ each: true })
     @Type(() => PartialItemDto)
     items: PartialItemDto[];
+
 
     @IsString()
     reason: string;

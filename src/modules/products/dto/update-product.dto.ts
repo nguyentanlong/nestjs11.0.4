@@ -57,6 +57,11 @@ export class UpdateProductDtoMoi {
     @IsString()
     shortDescription?: string;
 
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    keywords?: string[];
+
     // 📝 Mô tả chi tiết (optional)
     @IsOptional()
     @IsString()

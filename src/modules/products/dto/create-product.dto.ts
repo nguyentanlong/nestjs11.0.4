@@ -16,6 +16,10 @@ export class CreateProductDto {
 
     @IsString()
     shortDescription: string;
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    keywords?: string[];
 
     @IsString()
     description: string;

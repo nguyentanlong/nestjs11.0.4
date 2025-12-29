@@ -5,14 +5,29 @@ import { Order } from './entities/order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Role } from '../../common/enums/enum.role';
 import { PartialActionDto } from './dto/partial-action.dto';
+import { ProductsService } from '../products/products.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(Order) private orderRepo: Repository<Order>,
+    private productsService: ProductsService,
   ) { }
 
   async create(dto: CreateOrderDto, userId: string) {
+    // Lấy giá hiện tại từ Product (snapshot)
+    const productsWithPrice = await Promise.all(
+      dto.items.map(async (item) => {
+        const product = await this.productsService.findOne(item.productId);
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          price: product.price,  // snapshot giá lúc mua
+        };
+      }),
+    );
+
+    const totalAmount = productsWithPrice.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const order = this.orderRepo.create({
       userId,
       products: dto.products,
@@ -85,9 +100,9 @@ export class OrdersService {
       if (item.quantity > orderItem.quantity) {
         throw new BadRequestException(`Số lượng ${item.quantity} lớn hơn số lượng đã mua (${orderItem.quantity})`);
       }
-
+      order.totalAmount -= item.quantity * orderItem.price;  // giờ price chắc chắn number
       orderItem.quantity -= item.quantity;
-      order.totalAmount -= item.quantity * orderItem.price;
+      // order.totalAmount -= item.quantity * orderItem.price;
       updated = true;
     });
 

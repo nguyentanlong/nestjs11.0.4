@@ -9,6 +9,9 @@ export class Product {
     @Column()
     productName: string;
 
+    @Column("text", { array: true, nullable: true })
+    keywords: string[];
+
     @Column()
     shortDescription: string;
 

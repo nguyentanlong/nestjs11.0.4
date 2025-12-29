@@ -16,13 +16,25 @@ export class Order {
     @ManyToOne(() => User, (user) => user.orders)
     @JoinColumn({ name: 'userId' }) // ánh xạ userId với quan hệ user: User;
     user: User;
+
+    @Column('real', { default: 0 })
+    price: number;
+
+    // sqlife ko hỗ trợ decimal
+    // @Column('decimal', { precision: 10, scale: 2, default: 0 })
+    // price: number;  // thêm vào struct products ko thì bị lỗi Nan
     // @ManyToOne(() => User, (user) => user.orders) userId: User;
 
     @Column('json')  // mảng sản phẩm mua
     // @ManyToOne(() => Product, product => product.orders)//tạo quan hệ với product
     products: { productId: string; quantity: number; price: number }[];
 
-    @Column('decimal')
+    @Column('decimal', {
+        precision: 10, scale: 2, transformer: {
+            to: (value: number) => value,
+            from: (value: string) => parseFloat(value),
+        }
+    })
     totalAmount: number;  // tổng tiền
 
     //sql-better3 ko hỗ trợ
