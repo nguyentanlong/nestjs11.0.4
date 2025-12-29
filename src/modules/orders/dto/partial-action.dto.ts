@@ -16,7 +16,7 @@ export class PartialActionDto {
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => PartialItemDto)
-    items: PartialItemDto[];
+    productPartial: PartialItemDto[];
 
 
     @IsString()

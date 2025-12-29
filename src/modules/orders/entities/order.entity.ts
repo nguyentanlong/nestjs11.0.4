@@ -17,7 +17,7 @@ export class Order {
     @JoinColumn({ name: 'userId' }) // ánh xạ userId với quan hệ user: User;
     user: User;
 
-    @Column('real', { default: 0 })
+    @Column('real', { nullable: true })
     price: number;
 
     // sqlife ko hỗ trợ decimal
@@ -29,12 +29,12 @@ export class Order {
     // @ManyToOne(() => Product, product => product.orders)//tạo quan hệ với product
     products: { productId: string; quantity: number; price: number }[];
 
-    @Column('decimal', {
+    @Column('float'/*'decimal', {
         precision: 10, scale: 2, transformer: {
             to: (value: number) => value,
             from: (value: string) => parseFloat(value),
         }
-    })
+    }*/)
     totalAmount: number;  // tổng tiền
 
     //sql-better3 ko hỗ trợ
@@ -42,7 +42,7 @@ export class Order {
     // status: string;  // trạng thái order
     @Column({
         type: 'simple-enum',
-        enum: ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'returned'],
+        enum: ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'returned', 'partial_cancelled', 'partial_returned'],
         default: 'pending',
     })
     status: string;

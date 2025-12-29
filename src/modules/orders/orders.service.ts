@@ -17,8 +17,9 @@ export class OrdersService {
   async create(dto: CreateOrderDto, userId: string) {
     // Lấy giá hiện tại từ Product (snapshot)
     const productsWithPrice = await Promise.all(
-      dto.items.map(async (item) => {
+      dto.products.map(async (item) => {
         const product = await this.productsService.findOne(item.productId);
+        if (!product) { throw new NotFoundException(`Product ${item.productId} ko tìm thấy`); }
         return {
           productId: item.productId,
           quantity: item.quantity,
@@ -30,8 +31,9 @@ export class OrdersService {
     const totalAmount = productsWithPrice.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const order = this.orderRepo.create({
       userId,
-      products: dto.products,
-      totalAmount: dto.totalAmount,
+      // products: dto.products,
+      // totalAmount: dto.totalAmount,
+      products: productsWithPrice, totalAmount,// ✅ lưu snapshot có cả price totalAmount, // ✅ dùng giá trị đã tính
       status: 'pending',
       createdAt: new Date(),
     });
@@ -93,7 +95,7 @@ export class OrdersService {
     }
 
     let updated = false;
-    dto.items.forEach(item => {
+    dto.productPartial.forEach(item => {
       const orderItem = order.products.find(p => p.productId === item.productId);
       if (!orderItem) throw new BadRequestException(`Sản phẩm ${item.productId} không có trong đơn`);
 
