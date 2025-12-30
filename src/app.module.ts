@@ -28,7 +28,12 @@ import { Order } from './modules/orders/entities/order.entity';
       type: 'better-sqlite3',        // đổi thành sqlite siêu nhanh
       database: 'Database.db',   // tự động tạo file .db trong thư mục dự án
       entities: [User, Product, Comment, Order],             // vẫn để vậy là được
-      synchronize: true,//tự tạo bảng
+      //start cho build
+      autoLoadEntities: true,  // THÊM DÒNG NÀY – tự load relation
+      synchronize: false,  // production tắt
+      migrations: [__dirname + '/migrations/*.js'],  // nếu dùng migration
+      //end cho build
+      // synchronize: true,//tự tạo bảng
     }),
     UsersModule,
     AuthModule,
