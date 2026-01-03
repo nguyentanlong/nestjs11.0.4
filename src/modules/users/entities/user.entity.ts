@@ -13,6 +13,9 @@ export class User {
     @Column({ unique: true })
     email: string;
 
+    @Column({ default: false })  // mặc định chưa verify
+    isEmailVerified: boolean;
+
     @Column()
     password: string;
 

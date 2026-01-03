@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, HttpCode, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Controller, HttpCode, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -8,15 +8,43 @@ import { ApiBody } from '@nestjs/swagger';
 import { LogoutDto } from './dto/logout.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerAvatarConfig } from 'src/up-files/multer.config';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from '../users/entities/user.entity';
+import { Repository } from 'typeorm';
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+    constructor(private authService: AuthService,
+        private readonly jwtService: JwtService,
+        @InjectRepository(User) private readonly userRepo: Repository<User>,
+    ) { }
 
 
     @Post('register')
     @UseInterceptors(FileInterceptor('avatar', multerAvatarConfig))
     async register(@Body() dto: RegisterDto, @UploadedFile() file?: Express.Multer.File) {
         return this.authService.register(dto, file);
+    }
+
+    @Get('verify-email')
+    async verifyEmail(@Query('token') token: string) {
+        try {
+            const payload = this.jwtService.verify(token, { secret: process.env.JWT_VERIFY_SECRET });
+            const user = await this.userRepo.findOneBy({ id: payload.sub });
+
+            if (!user) throw new BadRequestException('Token không hợp lệ');
+
+            if (user.isEmailVerified) {
+                return { message: 'Tài khoản đã được xác thực trước đó' };
+            }
+
+            user.isEmailVerified = true;
+            await this.userRepo.save(user);
+
+            return { message: 'Xác thực email thành công. Bạn có thể đăng nhập ngay!' };
+        } catch (error) {
+            throw new BadRequestException('Token đã hết hạn hoặc không hợp lệ. Vui lòng đăng ký lại.');
+        }
     }
 
     @Post('login')

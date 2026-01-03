@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 // ĐỔI DÒNG NÀY THÀNH ĐÚNG ĐƯỜNG DẪN HIỆN TẠI CỦA ĐỆ
 import { User } from './modules/users/entities/user.entity';  // ← Đúng rồi nè!
 
@@ -14,10 +15,11 @@ import { Comment } from './modules/comments/entities/comment.entity';
 import { CommentsModule } from './modules/comments/comments.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { Order } from './modules/orders/entities/order.entity';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),//thêm để đọc được .env
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env', }),//thêm để đọc được .env
     TypeOrmModule.forRoot({
       // type: 'postgres',
       // host: 'localhost',
@@ -32,16 +34,19 @@ import { Order } from './modules/orders/entities/order.entity';
       autoLoadEntities: true,  // THÊM DÒNG NÀY – tự load relation
       synchronize: false,  // production tắt
       migrations: [__dirname + '/migrations/*.js'],  // nếu dùng migration
+      migrationsRun: true,
       //end cho build
       // synchronize: true,//tự tạo bảng
     }),
+    ScheduleModule.forRoot(),
     UsersModule,
     AuthModule,
     //thêm sản phẩm
     ProductsModule,
     TypeOrmModule.forFeature([Product]),
     CommentsModule,
-    OrdersModule
+    OrdersModule,
+    MailModule
   ],
   // providers: [CloudinaryProvider],
 })

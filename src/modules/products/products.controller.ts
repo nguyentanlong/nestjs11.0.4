@@ -63,7 +63,11 @@ import {
     Req,
     UseGuards,
     UseInterceptors,
-    UploadedFiles, // thêm để nhận nhiều file
+    UploadedFiles,
+    Query,
+    DefaultValuePipe,
+    ParseIntPipe,
+    ParseUUIDPipe, // thêm để nhận nhiều file
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';//UpdateProductDto
@@ -108,6 +112,26 @@ export class ProductsController {
     //     return this.productsService.createProduct(req.user, dto);
     // }
     // API tạo sản phẩm có json và file
+    @Get()
+    async findAll(
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+        @Query('search') search: string,
+    ) {
+        return this.productsService.findAll(page, limit, search);
+    }
+
+    @Get(':id')
+    async findOne(@Param('id', ParseUUIDPipe) id: string) {
+        return this.productsService.findOne(id);
+    }
+    @Get()
+    async findAllActive(
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+        @Query('limit', new DefaultValuePipe(8), ParseIntPipe) limit: number,
+    ) {
+        return this.productsService.findAllActive(page, limit);
+    }
     @Post()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @UseInterceptors(FilesInterceptor('files', 10, multerConfig)) // cho phép upload nhiều file
@@ -201,14 +225,14 @@ export class ProductsController {
 
 
     // 📖 API lấy tất cả sản phẩm
-    @Get()
-    async findAll() {
-        return this.productsService.findAll();
-    }
-
-    // 📖 API lấy chi tiết sản phẩm
-    @Get(':id')
-    async findOne(@Param('id') id: string) {
-        return this.productsService.findOne(id);
-    }
+    /* @Get()
+     async findAll() {
+         return this.productsService.findAll();
+     }
+ 
+     // 📖 API lấy chi tiết sản phẩm
+     @Get(':id')
+     async findOne(@Param('id') id: string) {
+         return this.productsService.findOne(id);
+     }*/
 }

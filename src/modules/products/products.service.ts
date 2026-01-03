@@ -1,7 +1,7 @@
 // Import các thư viện cần thiết
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 
 import { CreateProductDto, UpdateProductDto } from './dto/create-product.dto';
 import { Product } from './entities/product.entity';
@@ -349,12 +349,56 @@ export class ProductsService {
 
 
     // 📖 Lấy tất cả sản phẩm
-    async findAll() {
-        return this.productRepo.find();
+    /* async findAll() {
+         return this.productRepo.find();
+     }
+ 
+     // 📖 Lấy chi tiết sản phẩm theo id
+     async findOne(id: string) {
+         return this.productRepo.findOne({ where: { id } });
+     }*/
+    // List product public (pagination + search)
+    async findAll(page = 1, limit = 10, search?: string) {
+        const skip = (page - 1) * limit;
+
+        const [products, total] = await this.productRepo.findAndCount({
+            where: search ? { productName: Like(`%${search}%`) } : {},
+            order: { createdAt: 'DESC' },
+            skip,
+            take: limit,
+        });
+
+        return {
+            data: products,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
     }
 
-    // 📖 Lấy chi tiết sản phẩm theo id
+    // Detail product by id
     async findOne(id: string) {
-        return this.productRepo.findOne({ where: { id } });
+        const product = await this.productRepo.findOneBy({ id });
+        if (!product) throw new NotFoundException('Sản phẩm không tồn tại');
+        return product;
+    }
+    async findAllActive(page: number = 1, limit: number = 8) {
+        const skip = (page - 1) * limit;
+
+        const [products, total] = await this.productRepo.findAndCount({
+            where: { deleted: false },  // Chỉ lấy sản phẩm chưa xóa
+            order: { createdAt: 'DESC' },
+            skip,
+            take: limit,
+        });
+
+        return {
+            data: products,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
     }
 }

@@ -16,8 +16,6 @@ export class CreateUserDto {
     @IsNotEmpty({ message: 'Không được để trống sđt nha ku' }) phone: string;
     @IsNotEmpty({ message: 'Không được để trống địa chỉ nha ku' }) address: string;
     // Các field khác giống RegisterDto...
-    @IsEnum(Role, { message: 'Role phải là admin, staff hoặc user' })
-    role: Role;  // type là Role (enum)  // quan trọng: admin mới được set cái này!
     @IsNotEmpty() @MinLength(8, { message: 'Mật khẩu phải có ít nhất 8 ký tự' }) @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*()-=_+|{}'",.])[A-Za-z\d@$!%*?&+]{8,}$/
         ,
         {
@@ -27,7 +25,7 @@ export class CreateUserDto {
     ) password: string;
     @IsNotEmpty({ message: 'Không được để trống tên đầy đủ nha ku' }) fullName: string;
     // @IsOptional() friendly?: number;
-    @IsOptional()
+    /*@IsOptional()
     @Transform(({ value }) => {
         if (value === undefined || value === null || value === '') {
             return 0;
@@ -35,6 +33,8 @@ export class CreateUserDto {
         return Number(value);
     })
     friendly: number;
+    @IsEnum(Role, { message: 'Role phải là admin, staff hoặc user' })
+    role: Role;  // type là Role (enum)  // quan trọng: admin mới được set cái này!*/
     @IsOptional()
     @IsString()
     avatar?: string;

@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsEnum, IsNumber, IsOptional, IsPhoneNumber, IsString } from "class-validator";
+import { IsEnum, IsInt, IsNumber, IsOptional, IsPhoneNumber, IsString, Max, Min } from "class-validator";
 import { Role } from "src/common/enums/enum.role";
 import { DeleteDateColumn } from "typeorm";
 
@@ -31,6 +31,7 @@ export class UpdateUserDto {
         }
         return Number(value);
     })
+    @IsInt({ message: 'Friendly phải là số nguyên' }) @Min(0, { message: 'Friendly tối thiểu là 0' }) @Max(10, { message: 'Friendly tối đa là 10' })
     friendly: number;
     @IsOptional()
     @IsString()

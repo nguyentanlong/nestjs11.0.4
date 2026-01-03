@@ -9,45 +9,93 @@ import { LoginDto } from './dto/login.dto';
 import { BlacklistService } from './blacklist.service';
 import { hashPassword } from 'src/common/utils/hash.util';  // reuse hash
 import { Role } from 'src/common/enums/enum.role';  // enum role
+import { MailService } from '../../mail/mail.service';
+import { v4 as uuidv4 } from 'uuid';
+import { VerificationToken } from './entities/verification-token.entity';
+
 
 @Injectable()
 export class AuthService {
     constructor(
-        @InjectRepository(User) private userRepo: Repository<User>,
-        private jwtService: JwtService,
-        private blacklistService: BlacklistService,
+        @InjectRepository(User)
+        private readonly userRepo: Repository<User>,  // index 0: UserRepository
+        @InjectRepository(VerificationToken) private readonly verificationTokenRepo: Repository<VerificationToken>,  // thêm dòng này
+        private jwtService: JwtService,  // index 1
+        private blacklistService: BlacklistService,  // index 2
+        private mailService: MailService,  // index 3: MailService
+        // private readonly verificationTokenRepo: Repository<VerificationToken>,
+        // @InjectRepository(User) private userRepo: Repository<User>,
+        // private readonly verificationTokenRepo: Repository<VerificationToken>,
+        // private jwtService: JwtService,
+        // private blacklistService: BlacklistService,
+        // private readonly mailService: MailService,
     ) { }
 
     async register(dto: RegisterDto, file?: Express.Multer.File) {
         const exist = await this.userRepo.findOneBy({ email: dto.email });
-        if (exist) throw new BadRequestException('Email đã tồn tại nha ku');
 
+        if (exist) {
+            if (!exist.isEmailVerified) {
+                // Trường hợp user đã tồn tại nhưng chưa xác thực
+                const jti = uuidv4();
+                const verifyToken = this.jwtService.sign(
+                    { sub: exist.id, jti },
+                    { secret: process.env.JWT_VERIFY_SECRET, expiresIn: '5m' },
+                );
 
+                const tokenRecord = this.verificationTokenRepo.create({
+                    jti,
+                    userId: exist.id,
+                    expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+                });
+                await this.verificationTokenRepo.save(tokenRecord);
+
+                await this.mailService.sendVerificationEmail(exist.email, verifyToken);//gọi hàm gửi mail
+
+                return { message: 'Email đã tồn tại nhưng chưa xác thực. Đã gửi lại mail xác thực.' };
+            } else {
+                // Trường hợp user đã tồn tại và đã xác thực
+                throw new BadRequestException('Email đã tồn tại và đã xác thực nha ku');
+                // Nếu muốn xóa record thì thay bằng:
+                // await this.userRepo.delete(exist.id);
+                // throw new BadRequestException('Email đã tồn tại và đã xác thực, record đã bị xóa.');
+            }
+        }
+
+        // Nếu không tồn tại thì code sẽ đi tiếp xuống phần tạo user mới
+
+        // Nếu chưa tồn tại thì tạo user mới
         const hashedPassword = await hashPassword(dto.password);
-        // AN TOÀN: chỉ hash nếu chưa phải hashed format
-        // let hashedPassword = dto.password;
-        // if (!dto.password.startsWith('$2b$')) {  // nếu chưa hash
-        //     hashedPassword = await hashPassword(dto.password);
-        //     console.log('Hashed new plain password');
-        // } else {
-        //     console.log('Password đã hashed trước, giữ nguyên');
-        // }
-
         const user = this.userRepo.create({
             ...dto,
-            password: hashedPassword,          // override password đã hash
-            role: Role.USER,                   // force USER cho register public → an toàn bảo mật
+            password: hashedPassword,
+            role: Role.USER,
+            isEmailVerified: false,
         });
 
-        // Avatar upload (nếu có)
         if (file?.filename) {
             user.avatar = `mediaasset/avatars/${file.filename}`;
         }
 
         await this.userRepo.save(user);
-        // console.log('User saved với password:', user.password);  // kiểm tra override
 
-        return this.generateTokens(user);
+        // Tạo token verify cho user mới
+        const jti = uuidv4();
+        const verifyToken = this.jwtService.sign(
+            { sub: user.id, jti },
+            { secret: process.env.JWT_VERIFY_SECRET, expiresIn: '5m' },
+        );
+
+        const tokenRecord = this.verificationTokenRepo.create({
+            jti,
+            userId: user.id,
+            expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        });
+        await this.verificationTokenRepo.save(tokenRecord);
+
+        await this.mailService.sendVerificationEmail(user.email, verifyToken);
+
+        return { message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực.', tokens: this.generateTokens(user) };
     }
 
     // async login(dto: LoginDto) {
@@ -64,6 +112,186 @@ export class AuthService {
     // }
     // Đã có import bcrypt và hashPassword util
 
+    // Verify email token (1 giờ hết hạn)
+    /*async verifyEmail(token: string) {
+        const payload = this.jwtService.verify(token, { secret: process.env.JWT_VERIFY_SECRET });
+        const user = await this.userRepo.findOneBy({ id: payload.sub });
+        if (!user) throw new BadRequestException('Token không hợp lệ');
+
+        user.isEmailVerified = true;
+        await this.userRepo.save(user);
+        return { message: 'Xác thực email thành công' };
+    }*/
+
+    /*async verifyEmail(token: string) {
+        const payload = this.jwtService.verify(token, { secret: process.env.JWT_VERIFY_SECRET });
+
+        const tokenRecord = await this.verificationTokenRepo.findOneBy({ jti: payload.jti, userId: payload.sub });
+        if (!tokenRecord || tokenRecord.used || new Date() > tokenRecord.expiresAt) {
+            throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
+        }
+
+        const user = await this.userRepo.findOneBy({ id: payload.sub });
+        if (!user) { throw new BadRequestException('Không tìm thấy user'); }
+        user.isEmailVerified = true;
+        await this.userRepo.save(user);
+
+        // Đánh dấu used + xóa record (hoặc soft delete)
+        tokenRecord.used = true;
+        await this.verificationTokenRepo.remove(tokenRecord);  // xóa luôn
+
+        return { message: 'Xác thực thành công' };
+    }*/
+    // Forgot password
+    /*async verifyEmail(token: string) {
+        const payload = this.jwtService.verify(token, { secret: process.env.JWT_VERIFY_SECRET });
+
+        const tokenRecord = await this.verificationTokenRepo.findOneBy({
+            jti: payload.jti,
+            userId: payload.sub
+        });
+
+        if (!tokenRecord || tokenRecord.used || new Date() > tokenRecord.expiresAt) {
+            throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
+        }
+
+        const user = await this.userRepo.findOneBy({ id: payload.sub });
+        if (!user) throw new BadRequestException('User không tồn tại');
+
+        user.isEmailVerified = true;
+        await this.userRepo.save(user);
+
+        // Xóa record token vừa dùng (theo id) → an toàn 100%
+        await this.verificationTokenRepo.delete(tokenRecord.id);
+
+        // Nếu muốn xóa tất cả token khác của user này (đã xác thực) để DB sạch hơn
+        await this.verificationTokenRepo.delete({ userId: user.id }); // <--- thêm dòng này
+
+        return { message: 'Xác thực thành công' };
+    }*/
+
+    /* async verifyEmail(token: string) {
+         const payload = this.jwtService.verify(token, { secret: process.env.JWT_VERIFY_SECRET });
+ 
+         // Load full entity (có id)
+         const tokenRecord = await this.verificationTokenRepo.findOne({
+             where: { jti: payload.jti, userId: payload.sub },
+         });
+ 
+         if (!tokenRecord || tokenRecord.used || new Date() > tokenRecord.expiresAt) {
+             throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
+         }
+ 
+         const user = await this.userRepo.findOneBy({ id: payload.sub });
+         if (!user) throw new BadRequestException('User không tồn tại');
+ 
+         user.isEmailVerified = true;
+         await this.userRepo.save(user);
+ 
+         // XÓA AN TOÀN: dùng delete bằng id (không phụ thuộc entity partial)
+         await this.verificationTokenRepo.delete(tokenRecord.id);
+ 
+         // Bonus: xóa tất cả token cũ của user này (DB sạch)
+         await this.verificationTokenRepo.delete({ userId: payload.sub });
+ 
+         return { message: 'Xác thực thành công' };
+     }*/
+
+    /*async verifyEmail(token: string) {
+        const payload = this.jwtService.verify(token, { secret: process.env.JWT_VERIFY_SECRET });
+
+        // Check token record tồn tại + valid
+        const tokenRecord = await this.verificationTokenRepo.findOneBy({
+            jti: payload.jti,
+            userId: payload.sub,
+        });
+
+        if (!tokenRecord || tokenRecord.used || new Date() > tokenRecord.expiresAt) {
+            throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
+        }
+
+        const user = await this.userRepo.findOneBy({ id: payload.sub });
+        if (!user) throw new BadRequestException('User không tồn tại');
+
+        user.isEmailVerified = true;
+        await this.userRepo.save(user);
+
+        // FIX: dùng query delete raw bằng jti + userId (an toàn SQLite)
+        await this.verificationTokenRepo
+            .createQueryBuilder()
+            .delete()
+            .from('verification_token')
+            .where('jti = :jti AND userId = :userId', { jti: payload.jti, userId: payload.sub })
+            .execute();
+
+        // Bonus: xóa tất cả token cũ của user (DB sạch)
+        await this.verificationTokenRepo.delete({ userId: payload.sub });
+
+        return { message: 'Xác thực thành công' };
+    }*/
+
+    /*async verifyEmail(token: string) {
+        const payload = this.jwtService.verify(token, { secret: process.env.JWT_VERIFY_SECRET });
+
+        const tokenRecord = await this.verificationTokenRepo.findOneBy({
+            jti: payload.jti,
+            userId: payload.sub,
+        });
+
+        if (!tokenRecord || tokenRecord.used || new Date() > tokenRecord.expiresAt) {
+            throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
+        }
+
+        // Parallel save user + delete token (tối ưu nhất)
+        await Promise.all([
+            this.userRepo.update(payload.sub, { isEmailVerified: true }),  // nhanh hơn save full entity
+            this.verificationTokenRepo.delete({ jti: payload.jti }),       // delete raw
+            // Hoặc xóa tất cả token của user (DB sạch hơn)
+            this.verificationTokenRepo.delete({ userId: payload.sub })
+        ]);
+
+        return { message: 'Xác thực thành công' };
+    }*/
+
+    async verifyEmail(token: string) {
+        console.log("Token input:", token);
+        const payload = this.jwtService.verify(token, { secret: process.env.JWT_VERIFY_SECRET });
+        console.log("Payload:", payload);
+        const tokenRecord = await this.verificationTokenRepo.findOneBy({
+            jti: payload.jti,
+            userId: payload.sub,
+        });
+        console.log("TokenRecord:", tokenRecord);
+        if (!tokenRecord || tokenRecord.used || new Date() > tokenRecord.expiresAt) {
+            throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
+        }
+
+        const user = await this.userRepo.findOneBy({ id: payload.sub });
+        if (!user) throw new BadRequestException('User không tồn tại');
+
+        // Update verify
+        console.log("Payload.sub", user.id);
+        console.log("userId trong verification toke", tokenRecord.userId);
+        // user.isEmailVerified = true;
+        // await this.userRepo.save(user);
+
+        // XÓA TẤT CẢ token của user (sạch DB)
+        // await this.verificationTokenRepo.delete({ userId: user.id });
+
+        return { message: 'Xác thực thành công' };
+    }
+    async forgotPassword(email: string) {
+        const user = await this.userRepo.findOneBy({ email });
+        if (!user) return { message: 'Nếu email tồn tại, link reset sẽ được gửi' };  // chống enum
+
+        const token = this.jwtService.sign(
+            { sub: user.id },
+            { secret: process.env.JWT_RESET_SECRET, expiresIn: '5m' },
+        );
+
+        await this.mailService.sendPasswordResetEmail(email, token);
+        return { message: 'Link reset đã gửi (nếu email tồn tại)' };
+    }
     async login(dto: LoginDto) {
         // console.log('Login attempt:', dto.email);
 
@@ -73,6 +301,11 @@ export class AuthService {
         if (!user) {
             throw new UnauthorizedException('Email hoặc mật khẩu sai rồi đệ ơi');
         }
+        if (!user.isEmailVerified) {
+            throw new UnauthorizedException('Tài khoản chưa xác thực email. Vui lòng kiểm tra hộp thư');
+        }
+        const isMatch = await bcrypt.compare(dto.password, user.password);
+        if (!isMatch) throw new UnauthorizedException('Email hoặc mật khẩu sai');
 
         // Thay bcrypt.compare bằng cách thủ công từ utils để chắc chắn cùng algo
         // const isMatch = await bcrypt.compare(dto.password, user.password);

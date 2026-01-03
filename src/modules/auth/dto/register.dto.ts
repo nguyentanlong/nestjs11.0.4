@@ -6,13 +6,6 @@ export class RegisterDto {
     @IsNotEmpty({ message: 'Không được để trống username nha ku' }) username: string;
     @IsNotEmpty({ message: 'Không được để trống sđt nha ku' }) phone: string;
     @IsNotEmpty({ message: 'Không được để trống địa chỉ nha ku' }) address: string;
-    @IsOptional() @IsString() @Transform(({ value }) => {
-        if (value === undefined || value === null || value === '') {
-            return 'user';
-        }
-        return value;
-    })
-    role: string;//@IsOptional() @IsString() @Transform(({ value }) => value ?? 'khách hàng') role: string;
     @IsNotEmpty() @MinLength(8, { message: 'Mật khẩu phải có ít nhất 8 ký tự' }) @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*()-=_+|{}'",.])[A-Za-z\d@$!%*?&+]{8,}$/
         ,
         {
@@ -22,7 +15,7 @@ export class RegisterDto {
     ) password: string;
     @IsNotEmpty({ message: 'Không được để trống tên đầy đủ nha ku' }) fullName: string;
     // @IsOptional() friendly?: number;
-    @IsOptional()
+    /*@IsOptional()
     @Transform(({ value }) => {
         if (value === undefined || value === null || value === '') {
             return 0;
@@ -30,6 +23,13 @@ export class RegisterDto {
         return Number(value);
     })
     friendly: number;
+     @IsOptional() @IsString() @Transform(({ value }) => {
+        if (value === undefined || value === null || value === '') {
+            return 'user';
+        }
+        return value;
+    })
+    role: string;*///@IsOptional() @IsString() @Transform(({ value }) => value ?? 'khách hàng') role: string;
     @IsOptional()
     @IsString()
     avatar?: string;

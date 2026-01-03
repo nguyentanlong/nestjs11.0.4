@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { Comment } from '../../comments/entities/comment.entity';
 import { Order } from '../../orders/entities/order.entity';
+import { Optional } from '@nestjs/common';
 @Entity('products')
 export class Product {
     @PrimaryGeneratedColumn('uuid')
@@ -52,7 +53,10 @@ export class Product {
     // không tạo quan hệ giữa product và order
     // @Column('json')
     // products: { productId: string; quantity: number; price: number }[];
-
+    // @Optional()
+    // @Column({ default: Date })
+    // createdAt: Date;
+    @CreateDateColumn({ type: 'datetime' }) createdAt: Date;
     @Column({ default: false })
     deleted: boolean;
 }
