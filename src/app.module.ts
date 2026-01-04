@@ -16,10 +16,20 @@ import { CommentsModule } from './modules/comments/comments.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { Order } from './modules/orders/entities/order.entity';
 import { MailModule } from './mail/mail.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env', }),//thêm để đọc được .env
+    ThrottlerModule.forRoot([{
+      name: 'short',
+      ttl: 60000,  // 60s=1p
+      limit: 3,    // 3 request/phút/email
+    }, {
+      name: 'long',
+      ttl: 86400000,  // 24h
+      limit: 5,     // 5 request/giờ/email
+    }]),
     TypeOrmModule.forRoot({
       // type: 'postgres',
       // host: 'localhost',

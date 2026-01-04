@@ -301,23 +301,31 @@ export class AuthService {
     }
     async resetPassword(token: string, newPassword: string) {
         try {
+            // 1. Verify token
             const payload = this.jwtService.verify(token, { secret: process.env.JWT_RESET_SECRET });
+
+            // 2. Tìm token trong DB
             const tokenRecord = await this.resetTokenRepo.findOneBy({ jti: payload.jti, userId: payload.sub });
 
             if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
                 throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
             }
 
+            // 3. Hash mật khẩu mới
             const hashedPassword = await hashPassword(newPassword);
+
+            // 4. Update mật khẩu xuống bảng user
             await this.userRepo.update(payload.sub, { password: hashedPassword });
 
-            await this.resetTokenRepo.delete({ jti: payload.jti });
+            // 5. Xóa token vừa dùng và tất cả token reset khác của user
+            await this.resetTokenRepo.delete({ userId: payload.sub });
 
             return { message: 'Đặt lại mật khẩu thành công' };
         } catch (e) {
             throw new BadRequestException('Token không hợp lệ');
         }
     }
+
 
     async login(dto: LoginDto) {
         // console.log('Login attempt:', dto.email);

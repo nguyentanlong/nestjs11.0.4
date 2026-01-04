@@ -12,6 +12,8 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import { Repository } from 'typeorm';
+import { Throttle } from '@nestjs/throttler';
+import { EmailThrottlerGuard } from './guards/email-throttler.guard';
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService,
@@ -52,6 +54,8 @@ export class AuthController {
     @Post('resend-verify') async resendVerify(@Body('email') email: string) { // Có thể tái sử dụng logic trong register khi user tồn tại nhưng chưa verify 
         return this.authService.forgotPassword(email);
     }// nếu bạn muốn tách riêng, tạo service resendVerifyEmail }
+    @Throttle({ short: { limit: 5, ttl: 60000 } })  // 5 lần/phút
+    @UseGuards(EmailThrottlerGuard)
     @Post('forgot-password')
     async forgotPassword(@Body('email') email: string) {
         return this.authService.forgotPassword(email);
