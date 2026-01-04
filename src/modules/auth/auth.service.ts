@@ -12,6 +12,7 @@ import { Role } from 'src/common/enums/enum.role';  // enum role
 import { MailService } from '../../mail/mail.service';
 import { v4 as uuidv4 } from 'uuid';
 import { VerificationToken } from './entities/verification-token.entity';
+import { PasswordResetToken } from 'src/common/entities/password-reset-token.entity';
 
 
 @Injectable()
@@ -20,6 +21,8 @@ export class AuthService {
         @InjectRepository(User)
         private readonly userRepo: Repository<User>,  // index 0: UserRepository
         @InjectRepository(VerificationToken) private readonly verificationTokenRepo: Repository<VerificationToken>,  // thêm dòng này
+        @InjectRepository(PasswordResetToken)
+        private readonly resetTokenRepo: Repository<PasswordResetToken>,
         private jwtService: JwtService,  // index 1
         private blacklistService: BlacklistService,  // index 2
         private mailService: MailService,  // index 3: MailService
@@ -50,7 +53,7 @@ export class AuthService {
                 });
                 await this.verificationTokenRepo.save(tokenRecord);
 
-                await this.mailService.sendVerificationEmail(exist.email, verifyToken);//gọi hàm gửi mail
+                await this.mailService.sendVerificationEmail(exist.email, verifyToken, exist.fullName);//gọi hàm gửi mail
 
                 return { message: 'Email đã tồn tại nhưng chưa xác thực. Đã gửi lại mail xác thực.' };
             } else {
@@ -93,7 +96,7 @@ export class AuthService {
         });
         await this.verificationTokenRepo.save(tokenRecord);
 
-        await this.mailService.sendVerificationEmail(user.email, verifyToken);
+        await this.mailService.sendVerificationEmail(user.email, verifyToken, String(user.fullName) || "Bạn");
 
         return { message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực.', tokens: this.generateTokens(user) };
     }
@@ -254,14 +257,14 @@ export class AuthService {
     }*/
 
     async verifyEmail(token: string) {
-        console.log("Token input:", token);
+        // console.log("Token input:", token);
         const payload = this.jwtService.verify(token, { secret: process.env.JWT_VERIFY_SECRET });
-        console.log("Payload:", payload);
+        // console.log("Payload:", payload);
         const tokenRecord = await this.verificationTokenRepo.findOneBy({
             jti: payload.jti,
             userId: payload.sub,
         });
-        console.log("TokenRecord:", tokenRecord);
+        // console.log("TokenRecord:", tokenRecord);
         if (!tokenRecord || tokenRecord.used || new Date() > tokenRecord.expiresAt) {
             throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
         }
@@ -270,28 +273,52 @@ export class AuthService {
         if (!user) throw new BadRequestException('User không tồn tại');
 
         // Update verify
-        console.log("Payload.sub", user.id);
-        console.log("userId trong verification toke", tokenRecord.userId);
-        // user.isEmailVerified = true;
-        // await this.userRepo.save(user);
+        // console.log("Payload.sub", user.id);
+        // console.log("userId trong verification toke", tokenRecord.userId);
+        user.isEmailVerified = true;
+        await this.userRepo.save(user);
 
+        // Xóa token vừa dùng theo id (an toàn) 
+        await this.verificationTokenRepo.delete(tokenRecord.id);
         // XÓA TẤT CẢ token của user (sạch DB)
-        // await this.verificationTokenRepo.delete({ userId: user.id });
+        await this.verificationTokenRepo.delete({ userId: payload.sub });
 
         return { message: 'Xác thực thành công' };
     }
     async forgotPassword(email: string) {
         const user = await this.userRepo.findOneBy({ email });
         if (!user) return { message: 'Nếu email tồn tại, link reset sẽ được gửi' };  // chống enum
+        const jti = uuidv4();
+        const token = this.jwtService.sign({ sub: user.id, jti }, { secret: process.env.JWT_RESET_SECRET, expiresIn: '5m' },);
+        const tokenRecord = this.resetTokenRepo.create({ jti, userId: user.id, expiresAt: new Date(Date.now() + 15 * 60 * 1000), }); await this.resetTokenRepo.save(tokenRecord); await this.mailService.sendPasswordResetEmail(user.email, token, user.fullName ?? 'Bạn'); return { message: 'Đã gửi email đặt lại mật khẩu' };
+        // const token = this.jwtService.sign(
+        //     { sub: user.id },
+        //     { secret: process.env.JWT_RESET_SECRET, expiresIn: '5m' },
+        // );
 
-        const token = this.jwtService.sign(
-            { sub: user.id },
-            { secret: process.env.JWT_RESET_SECRET, expiresIn: '5m' },
-        );
-
-        await this.mailService.sendPasswordResetEmail(email, token);
-        return { message: 'Link reset đã gửi (nếu email tồn tại)' };
+        // await this.mailService.sendPasswordResetEmail(email, token, user.fullName);
+        // return { message: 'Link reset đã gửi (nếu email tồn tại)' };
     }
+    async resetPassword(token: string, newPassword: string) {
+        try {
+            const payload = this.jwtService.verify(token, { secret: process.env.JWT_RESET_SECRET });
+            const tokenRecord = await this.resetTokenRepo.findOneBy({ jti: payload.jti, userId: payload.sub });
+
+            if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
+                throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
+            }
+
+            const hashedPassword = await hashPassword(newPassword);
+            await this.userRepo.update(payload.sub, { password: hashedPassword });
+
+            await this.resetTokenRepo.delete({ jti: payload.jti });
+
+            return { message: 'Đặt lại mật khẩu thành công' };
+        } catch (e) {
+            throw new BadRequestException('Token không hợp lệ');
+        }
+    }
+
     async login(dto: LoginDto) {
         // console.log('Login attempt:', dto.email);
 

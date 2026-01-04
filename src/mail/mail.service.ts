@@ -16,7 +16,7 @@ export class MailService {
         }); return 'ok'
     }*/
 
-    async sendVerificationEmail(email: string, token: string) {
+    async sendVerificationEmail(email: string, token: string, fullName: string) {
         const appUrl = this.configService.get<string>('APP_URL') ?? 'http://localhost:3000';//để chạy online
         const url = `${appUrl}/auth/verify-email?token=${token}`;
 
@@ -24,11 +24,11 @@ export class MailService {
             to: email,
             subject: 'Xác thực email đăng ký',
             template: './verification',
-            context: { url },
+            context: { url, fullName },
         });
     }
 
-    async sendPasswordResetEmail(email: string, token: string) {
+    async sendPasswordResetEmail(email: string, token: string, fullName: string) {
         const appUrl = this.configService.get<string>('APP_URL') ?? 'http://localhost:3000';
         const url = `${appUrl}/auth/reset-password?token=${token}`;
         //const url = `http://localhost:3000/auth/reset-password?token=${token}`;
@@ -37,7 +37,7 @@ export class MailService {
             to: email,
             subject: 'Đặt lại mật khẩu',
             template: 'reset-password',
-            context: { url },
+            context: { url, fullName },
         });
     }
 }

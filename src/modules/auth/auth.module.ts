@@ -9,6 +9,7 @@ import { BlacklistService } from './blacklist.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailModule } from 'src/mail/mail.module';
 import { VerificationToken } from './entities/verification-token.entity';
+import { PasswordResetToken } from 'src/common/entities/password-reset-token.entity';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { VerificationToken } from './entities/verification-token.entity';
     MailModule,
 
     // Khai báo cả User và VerificationToken để inject repository
-    TypeOrmModule.forFeature([User, VerificationToken]),
+    TypeOrmModule.forFeature([User, VerificationToken, PasswordResetToken]),
 
     // Đăng ký JwtModule bằng ConfigService
     JwtModule.registerAsync({

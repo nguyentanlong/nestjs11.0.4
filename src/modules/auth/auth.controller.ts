@@ -26,7 +26,7 @@ export class AuthController {
         return this.authService.register(dto, file);
     }
 
-    @Get('verify-email')
+    /*@Get('verify-email')
     async verifyEmail(@Query('token') token: string) {
         try {
             const payload = this.jwtService.verify(token, { secret: process.env.JWT_VERIFY_SECRET });
@@ -45,6 +45,21 @@ export class AuthController {
         } catch (error) {
             throw new BadRequestException('Token đã hết hạn hoặc không hợp lệ. Vui lòng đăng ký lại.');
         }
+    }*/
+    // Endpoint verify email: được gọi khi user click link trong mail 
+    @Get('verify-email') async verifyEmail(@Query('token') token: string) { return this.authService.verifyEmail(token); }
+    // (Tuỳ chọn) Resend verify email nếu cần 
+    @Post('resend-verify') async resendVerify(@Body('email') email: string) { // Có thể tái sử dụng logic trong register khi user tồn tại nhưng chưa verify 
+        return this.authService.forgotPassword(email);
+    }// nếu bạn muốn tách riêng, tạo service resendVerifyEmail }
+    @Post('forgot-password')
+    async forgotPassword(@Body('email') email: string) {
+        return this.authService.forgotPassword(email);
+    }
+
+    @Post('reset-password')
+    async resetPassword(@Body() body: { token: string; newPassword: string }) {
+        return this.authService.resetPassword(body.token, body.newPassword);
     }
 
     @Post('login')
